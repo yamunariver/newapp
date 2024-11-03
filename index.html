@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Search</title>
+</head>
+<body>
+    <h1>Search Excel Sheet</h1>
+    <input type="text" id="searchInput" placeholder="Enter PIS Number">
+    <button onclick="searchEntry()">Search</button>
+    <div id="results"></div>
+    <button onclick="window.location.href='/home/yamuna/checksum/add.html'">Create New Entry</button>
+
+    <script>
+        async function searchEntry() {
+            const pis = document.getElementById("searchInput").value;
+            const response = await fetch(`/search?pis=${pis}`);
+            const data = await response.json();
+
+            let resultHTML = '<table border="1"><tr><th>PIS</th><th>Name</th><th>Computer IP</th><th>Switch IP</th><th>Port</th><th>Building</th><th>Room</th><th>Domain</th><th>Antivirus</th></tr>';
+            data.forEach(row => {
+                resultHTML += `<tr>
+                    <td>${row.PIS}</td>
+                    <td>${row.Name}</td>
+                    <td>${row['Computer IP']}</td>
+                    <td>${row['Switch IP']}</td>
+                    <td>${row.Port}</td>
+                    <td>${row.Building}</td>
+                    <td>${row.Room}</td>
+                    <td>${row.Domain}</td>
+                    <td>${row.Antivirus}</td>
+                    <td><button onclick="editEntry(${JSON.stringify(row)})">Edit</button></td>
+                </tr>`;
+            });
+            resultHTML += '</table>';
+            document.getElementById("results").innerHTML = resultHTML;
+        }
+
+        function editEntry(entry) {
+            localStorage.setItem('entryToEdit', JSON.stringify(entry));
+            window.location.href = '/edit.html';
+        }
+    </script>
+</body>
+</html>
+

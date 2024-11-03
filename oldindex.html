@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Sheet Entry Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .form-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        .form-group label, .form-group input {
+            flex: 1;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Excel Sheet Entry Management</h2>
+        
+        <!-- Search Bar -->
+        <div>
+            <input type="text" id="searchBar" placeholder="Search by PIS Number or other details">
+            <button onclick="searchEntries()">Search</button>
+        </div>
+
+        <!-- Table for Displaying Search Results -->
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>PIS Number</th>
+                    <th>Name</th>
+                    <th>Computer IP</th>
+                    <th>Switch IP</th>
+                    <th>Port</th>
+                    <th>Building</th>
+                    <th>Room</th>
+                    <th>Domain</th>
+                    <th>Antivirus</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <!-- Form to Add New Entry -->
+        <h3>Add New Entry</h3>
+        <div class="form-group">
+            <label>PIS Number: <input type="text" id="newPisNumber"></label>
+            <label>Name: <input type="text" id="newName"></label>
+            <label>Computer IP: <input type="text" id="newComputerIp"></label>
+            <label>Switch IP: <input type="text" id="newSwitchIp"></label>
+            <label>Port: <input type="text" id="newPort"></label>
+            <label>Building: <input type="text" id="newBuilding"></label>
+            <label>Room: <input type="text" id="newRoom"></label>
+            <label>Domain: <input type="text" id="newDomain"></label>
+            <label>Antivirus: <input type="text" id="newAntivirus"></label>
+        </div>
+        <button onclick="addEntry()">Create New Entry</button>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:8000'; // URL of your backend server
+
+        // Search entries function
+        async function searchEntries() {
+            const query = document.getElementById('searchBar').value;
+            const response = await fetch(`${apiUrl}/search?query=${query}`);
+            const data = await response.json();
+            populateTable(data);
+        }
+
+        // Populate the table with search results
+        function populateTable(data) {
+            const tableBody = document.getElementById('resultsTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear previous results
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.innerText = cell;
+                    tr.appendChild(td);
+                });
+
+                // Actions (Edit and Copy)
+                const actionsTd = document.createElement('td');
+                actionsTd.innerHTML = `
+                    <button onclick="editEntry('${row[0]}')">Edit</button>
+                    <button onclick="copyEntry('${row[0]}')">Copy</button>
+                `;
+                tr.appendChild(actionsTd);
+
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Add a new entry
+        async function addEntry() {
+            const entry = {
+                pis_number: document.getElementById('newPisNumber').value,
+                name: document.getElementById('newName').value,
+                computer_ip: document.getElementById('newComputerIp').value,
+                switch_ip: document.getElementById('newSwitchIp').value,
+                port: document.getElementById('newPort').value,
+                building: document.getElementById('newBuilding').value,
+                room: document.getElementById('newRoom').value,
+                domain: document.getElementById('newDomain').value,
+                antivirus: document.getElementById('newAntivirus').value
+            };
+
+            await fetch(`${apiUrl}/add_entry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(entry)
+            });
+            alert('Entry added successfully');
+            clearForm();
+        }
+
+        // Edit an existing entry
+        async function editEntry(pisNumber) {
+            const row = Array.from(document.querySelectorAll('#resultsTable tbody tr'))
+                .find(tr => tr.children[0].innerText === pisNumber);
+
+            const updatedEntry = {
+                pis_number: row.children[0].innerText,
+                name: row.children[1].innerText,
+                computer_ip: row.children[2].innerText,
+                switch_ip: row.children[3].innerText,
+                port: row.children[4].innerText,
+                building: row.children[5].innerText,
+                room: row.children[6].innerText,
+                domain: row.children[7].innerText,
+                antivirus: row.children[8].innerText
+            };
+
+            await fetch(`${apiUrl}/update_entry/${pisNumber}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedEntry)
+            });
+            alert('Entry updated successfully');
+        }
+
+        // Copy an entry and add as new
+        function copyEntry(pisNumber) {
+            const row = Array.from(document.querySelectorAll('#resultsTable tbody tr'))
+                .find(tr => tr.children[0].innerText === pisNumber);
+
+            document.getElementById('newPisNumber').value = ''; // New PIS number for unique entry
+            document.getElementById('newName').value = row.children[1].innerText;
+            document.getElementById('newComputerIp').value = row.children[2].innerText;
+            document.getElementById('newSwitchIp').value = row.children[3].innerText;
+            document.getElementById('newPort').value = row.children[4].innerText;
+            document.getElementById('newBuilding').value = row.children[5].innerText;
+            document.getElementById('newRoom').value = row.children[6].innerText;
+            document.getElementById('newDomain').value = row.children[7].innerText;
+            document.getElementById('newAntivirus').value = row.children[8].innerText;
+        }
+
+        // Clear the form fields
+        function clearForm() {
+            document.getElementById('newPisNumber').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newComputerIp').value = '';
+            document.getElementById('newSwitchIp').value = '';
+            document.getElementById('newPort').value = '';
+            document.getElementById('newBuilding').value = '';
+            document.getElementById('newRoom').value = '';
+            document.getElementById('newDomain').value = '';
+            document.getElementById('newAntivirus').value = '';
+        }
+    </script>
+</body>
+</html>
+

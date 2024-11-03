@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Entry</title>
+</head>
+<body>
+    <h1>Add New Entry</h1>
+    <form id="addEntryForm">
+        <label>PIS:</label> <input type="text" name="PIS"><br>
+        <label>Name:</label> <input type="text" name="Name"><br>
+        <label>Computer IP:</label> <input type="text" name="Computer IP"><br>
+        <label>Switch IP:</label> <input type="text" name="Switch IP"><br>
+        <label>Port:</label> <input type="text" name="Port"><br>
+        <label>Building:</label> <input type="text" name="Building"><br>
+        <label>Room:</label> <input type="text" name="Room"><br>
+        <label>Domain:</label> <input type="text" name="Domain"><br>
+        <label>Antivirus:</label> <input type="text" name="Antivirus"><br>
+        <button type="button" onclick="submitEntry()">Submit</button>
+    </form>
+
+    <script>
+        async function submitEntry() {
+            const form = document.getElementById('addEntryForm');
+            const formData = new FormData(form);
+            const entryData = Object.fromEntries(formData);
+
+            await fetch('/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entryData)
+            });
+
+            alert("New entry added successfully!");
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>
+
